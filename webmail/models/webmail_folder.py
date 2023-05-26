@@ -50,7 +50,8 @@ class WebmailFolder(models.Model):
 
     # Action Section
     def button_fetch_mails(self):
-        self.env["webmail.mail"].with_delay()._fetch_mails(self)
+        # self.env["webmail.mail"].with_delay()._fetch_mails(self)
+        self.env["webmail.mail"]._fetch_mails(self)
 
     # Private Section
     @api.model

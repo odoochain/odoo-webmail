@@ -3,10 +3,11 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 import imaplib
 import logging
-from email.header import decode_header
 
-from odoo import _, api, fields, models
+from odoo import _, fields, models
 from odoo.exceptions import UserError
+
+from .imap_tools import _get_subject
 
 _logger = logging.getLogger(__name__)
 
@@ -34,9 +35,7 @@ class WebmailMail(models.Model):
 
     reply_identifier = fields.Char(readonly=True)
 
-    technical_subject = fields.Char(required=True, readonly=True)
-
-    subject = fields.Char(compute="_compute_subject", store=True)
+    subject = fields.Char(readonly=True)
 
     sender = fields.Char(required=True, readonly=True)
 
@@ -52,11 +51,6 @@ class WebmailMail(models.Model):
     )
 
     flags_data = fields.Text(string="Technical field containing flags", readonly=True)
-
-    @api.depends("technical_subject")
-    def _compute_subject(self):
-        for mail in self:
-            mail.subject = self._get_text_from_encoded(mail.technical_subject)
 
     def _fetch_mails(self, webmail_folder):
         client = webmail_folder.account_id._get_client_connected()
@@ -148,7 +142,7 @@ class WebmailMail(models.Model):
                 "date_mail": envelope.date,
                 "reply_identifier": reply_identifier,
                 "origin_mail_id": origin_mail and origin_mail.id,
-                "technical_subject": envelope.subject.decode(),
+                "subject": _get_subject(envelope.subject),
                 "sender": self._get_mail_from_address(envelope.sender[0]),
                 "envelope_data": str(envelope),
                 "flags_data": str(mail_data[b"FLAGS"]),
@@ -178,8 +172,3 @@ class WebmailMail(models.Model):
         res = super().unlink()
         conversations.filtered(lambda x: x.mail_qty == 0).unlink()
         return res
-
-    def _get_text_from_encoded(self, encoded_words):
-
-        dh = decode_header(encoded_words)
-        return "".join([isinstance(t[0], bytes) and t[0].decode() or t[0] for t in dh])

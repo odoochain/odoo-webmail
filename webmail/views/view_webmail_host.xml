@@ -57,7 +57,7 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
         name="Hosts"
         parent="menu_configuration"
         action="action_webmail_host"
-        sequence="10"
+        sequence="100"
     />
 
 </odoo>
