@@ -26,6 +26,7 @@
         "views/menu.xml",
         "views/view_webmail_host.xml",
         "views/view_webmail_account.xml",
+        "views/view_webmail_address.xml",
         "views/view_webmail_folder.xml",
         "views/view_webmail_mail.xml",
         "views/view_webmail_conversation.xml",

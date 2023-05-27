@@ -10,7 +10,7 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
         <field name="model">webmail.mail</field>
         <field name="arch" type="xml">
             <search>
-                <field name="sender" />
+                <field name="sender_address_id" />
                 <field name="subject" />
                 <field name="folder_id" />
             </search>
@@ -25,7 +25,7 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
                 <field name="identifier" optional="hide" />
                 <field name="reply_identifier" optional="hide" />
                 <field name="date_mail" />
-                <field name="sender" />
+                <field name="sender_address_id" />
                 <field name="subject" />
                 <field name="conversation_id" />
                 <field name="origin_mail_id" />
@@ -46,7 +46,7 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
                             <field name="identifier" />
                             <field name="reply_identifier" />
                             <field name="date_mail" />
-                            <field name="sender" />
+                            <field name="sender_address_id" />
                             <field name="subject" />
                             <field name="folder_id" />
                             <field name="flags_data" />

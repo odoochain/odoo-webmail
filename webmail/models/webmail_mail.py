@@ -7,7 +7,7 @@ import logging
 from odoo import _, fields, models
 from odoo.exceptions import UserError
 
-from .imap_tools import _get_subject
+from .imap_tools import _get_string
 
 _logger = logging.getLogger(__name__)
 
@@ -37,7 +37,10 @@ class WebmailMail(models.Model):
 
     subject = fields.Char(readonly=True)
 
-    sender = fields.Char(required=True, readonly=True)
+    sender_address_id = fields.Many2one(
+        comodel_name="webmail.address",
+        required=True,
+    )
 
     user_id = fields.Many2one(
         comodel_name="res.users",
@@ -110,20 +113,10 @@ class WebmailMail(models.Model):
             ]
         )
 
+        # Get conversation(s) and merge if required or create a new one
         conversations = (
             other_mails.mapped("conversation_id") | origin_mail.conversation_id
         )
-        # conversation_id = (
-        #     (origin_mail and origin_mail.conversation_id.id)
-        #     or (other_mails and other_mails.mapped("conversation_id").ids[0])
-        #     or False
-        # )
-        # if "move" in envelope.subject.decode():
-        #     print("identifier", identifier)
-        #     print("reply_identifier", reply_identifier)
-        #     if not conversation_id:
-        #         import pdb; pdb.set_trace()
-
         if not conversations:
             conversation = self.env["webmail.conversation"].create(
                 {
@@ -142,8 +135,10 @@ class WebmailMail(models.Model):
                 "date_mail": envelope.date,
                 "reply_identifier": reply_identifier,
                 "origin_mail_id": origin_mail and origin_mail.id,
-                "subject": _get_subject(envelope.subject),
-                "sender": self._get_mail_from_address(envelope.sender[0]),
+                "subject": _get_string(envelope.subject),
+                "sender_address_id": self.env["webmail.address"]
+                ._get_from_address(webmail_folder.user_id, envelope.sender[0])
+                .id,
                 "envelope_data": str(envelope),
                 "flags_data": str(mail_data[b"FLAGS"]),
             }
@@ -163,9 +158,6 @@ class WebmailMail(models.Model):
                 }
             )
         return new_mail
-
-    def _get_mail_from_address(self, address):
-        return "%s@%s" % (address.mailbox.decode(), address.host.decode())
 
     def unlink(self):
         conversations = self.mapped("conversation_id")

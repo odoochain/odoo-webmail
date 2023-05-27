@@ -21,6 +21,12 @@ class WebmailConversation(models.Model):
 
     subject = fields.Char(compute="_compute_mail_infos", store=True)
 
+    contact_ids = fields.Many2many(
+        comodel_name="webmail.address",
+        compute="_compute_mail_infos",
+        store=True,
+    )
+
     mail_ids = fields.One2many(
         comodel_name="webmail.mail",
         inverse_name="conversation_id",
@@ -43,7 +49,7 @@ class WebmailConversation(models.Model):
     )
 
     # Compute Section
-    @api.depends("mail_ids.date_mail")
+    @api.depends("mail_ids.date_mail", "mail_ids.sender_address_id")
     def _compute_mail_infos(self):
         for conversation in self:
             mails = conversation.mail_ids.sorted(key=lambda r: r.date_mail)
@@ -55,6 +61,7 @@ class WebmailConversation(models.Model):
                 conversation.date_first_mail = False
                 conversation.date_last_mail = False
                 conversation.subject = False
+            conversation.contact_ids = mails.mapped("sender_address_id")
 
     @api.depends("mail_ids")
     def _compute_mail_qty(self):
