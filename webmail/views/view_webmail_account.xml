@@ -28,6 +28,8 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
                     type="object"
                     name="button_fetch_folders"
                 />
+                <field name="mail_qty" />
+                <button string="Fetch Mails" type="object" name="button_fetch_mails" />
             </tree>
         </field>
     </record>

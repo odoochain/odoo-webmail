@@ -10,7 +10,7 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
         <field name="model">webmail.conversation</field>
         <field name="arch" type="xml">
             <search>
-                <field name="subject" />
+                <field name="display_subject" />
                 <field name="account_id" />
                 <field name="contact_ids" />
             </search>
@@ -22,12 +22,14 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
         <field name="arch" type="xml">
             <tree>
                 <field name="contact_ids" widget="many2many_tags" />
-                <field name="subject" />
+                <field name="display_subject" />
+                <field name="display_date" />
                 <field
                     name="date_first_mail"
                     attrs="{'invisible': [('mail_qty', '&lt;', 2)]}"
+                    optional="hide"
                 />
-                <field name="date_last_mail" />
+                <field name="date_last_mail" optional="hide" />
                 <field name="mail_qty" />
                 <field name="account_id" optional="hide" />
             </tree>
@@ -44,7 +46,7 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
                     <group col="4">
                         <group>
                             <field name="mail_qty" />
-                            <field name="subject" />
+                            <field name="display_subject" />
                         </group>
                         <group>
                             <field

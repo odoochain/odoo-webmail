@@ -11,7 +11,7 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
         <field name="arch" type="xml">
             <search>
                 <field name="sender_address_id" />
-                <field name="subject" />
+                <field name="display_subject" />
                 <field name="folder_id" />
             </search>
         </field>
@@ -21,15 +21,15 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
         <field name="model">webmail.mail</field>
         <field name="arch" type="xml">
             <tree>
-                <field name="id" />
+                <field name="id" optional="hide" />
                 <field name="identifier" optional="hide" />
-                <field name="reply_identifier" optional="hide" />
-                <field name="date_mail" />
+                <field name="is_unread" />
                 <field name="sender_address_id" />
-                <field name="subject" />
-                <field name="conversation_id" />
-                <field name="origin_mail_id" />
+                <field name="display_subject" />
+                <field name="display_date" />
                 <field name="folder_id" optional="hide" />
+                <field name="conversation_id" optional="hide" />
+                <field name="reply_identifier" optional="hide" />
             </tree>
         </field>
     </record>
@@ -45,12 +45,13 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
                         <group>
                             <field name="identifier" />
                             <field name="reply_identifier" />
-                            <field name="date_mail" />
                             <field name="sender_address_id" />
-                            <field name="subject" />
+                            <field name="display_subject" />
                             <field name="folder_id" />
-                            <field name="flags_data" />
-                            <field name="envelope_data" />
+                            <field name="technical_date" />
+                            <field name="technical_flags" />
+                            <field name="technical_envelope" />
+                            <field name="technical_rfc822" />
                         </group>
                         <group />
                     </group>

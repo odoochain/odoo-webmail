@@ -19,7 +19,11 @@ class WebmailConversation(models.Model):
 
     date_last_mail = fields.Datetime(compute="_compute_mail_infos", store=True)
 
-    subject = fields.Char(compute="_compute_mail_infos", store=True)
+    display_date = fields.Char(compute="_compute_display_date")
+
+    display_subject = fields.Html(
+        string="Subject", compute="_compute_mail_infos", store=True
+    )
 
     contact_ids = fields.Many2many(
         comodel_name="webmail.address",
@@ -49,19 +53,30 @@ class WebmailConversation(models.Model):
     )
 
     # Compute Section
-    @api.depends("mail_ids.date_mail", "mail_ids.sender_address_id")
+    @api.depends(
+        "mail_ids.technical_date",
+        "mail_ids.sender_address_id",
+        "mail_ids.display_subject",
+    )
     def _compute_mail_infos(self):
         for conversation in self:
-            mails = conversation.mail_ids.sorted(key=lambda r: r.date_mail)
+            mails = conversation.mail_ids.sorted(key=lambda r: r.technical_date)
             if mails:
-                conversation.date_first_mail = mails[0].date_mail
-                conversation.date_last_mail = mails[-1].date_mail
-                conversation.subject = mails[0].subject
+                conversation.date_first_mail = mails[0].technical_date
+                conversation.date_last_mail = mails[-1].technical_date
+                conversation.display_subject = mails[0].display_subject
             else:
                 conversation.date_first_mail = False
                 conversation.date_last_mail = False
-                conversation.subject = False
+                conversation.display_subject = False
             conversation.contact_ids = mails.mapped("sender_address_id")
+
+    @api.depends("date_last_mail")
+    def _compute_display_date(self):
+        for conversation in self:
+            conversation.display_date = self.env["webmail.mail"]._get_display_date(
+                conversation.date_last_mail
+            )
 
     @api.depends("mail_ids")
     def _compute_mail_qty(self):
