@@ -57,7 +57,7 @@ class WebmailFolder(models.Model):
     @api.model
     def _fetch_folders(self, webmail_account):
         client = webmail_account._get_client_connected()
-        folder_datas = client.list_folders()
+        _status, folder_datas = client.list()
         client.logout()
 
         for folder_data in folder_datas:

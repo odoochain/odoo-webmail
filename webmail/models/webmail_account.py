@@ -2,10 +2,8 @@
 # @author: Sylvain LE GAL (https://twitter.com/legalsylvain)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
-import imaplib
 import socket
-
-import imapclient
+from imaplib import IMAP4
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
@@ -78,7 +76,7 @@ class WebmailAccount(models.Model):
     def _get_client_connected(self):
         self.ensure_one()
         try:
-            client = imapclient.IMAPClient(host=self.host_id.url)
+            client = IMAP4(host=self.host_id.url)
         except socket.gaierror as e:
             raise UserError(
                 _(
@@ -91,7 +89,7 @@ class WebmailAccount(models.Model):
 
         try:
             client.login(self.login, self.password)
-        except imaplib.IMAP4.error as e:
+        except IMAP4.error as e:
             raise UserError(
                 _(
                     "Authentication failed. Possible Reasons: \n"
