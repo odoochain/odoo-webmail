@@ -1,16 +1,17 @@
 # Copyright (C) 2023 - Today: OaaFS
 # @author: Sylvain LE GAL (https://twitter.com/legalsylvain)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+import email
+import email.policy
 import imaplib
 import logging
 from datetime import datetime
+from xmlrpc import client as xmlrpclib
 
 from babel.dates import format_date, format_time
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
-
-from .imap_tools import _get_string
 
 _logger = logging.getLogger(__name__)
 
@@ -19,24 +20,6 @@ class WebmailMail(models.Model):
     _name = "webmail.mail"
     _description = "Webmail Mail"
     _order = "technical_date desc"
-
-    is_unread = fields.Boolean(readonly=True)
-
-    technical_date = fields.Datetime(required=True, readonly=True)
-
-    technical_subject = fields.Char(readonly=True)
-
-    technical_rfc822 = fields.Text(
-        string="Technical field containing RFC822 Part.", readonly=True
-    )
-
-    technical_envelope = fields.Text(
-        string="Technical field containing ENVELOPE Part.", readonly=True
-    )
-
-    technical_flags = fields.Text(
-        string="Technical field containing FLAGS Part.", readonly=True
-    )
 
     display_date = fields.Char(string="date", compute="_compute_display_date")
 
@@ -50,20 +33,28 @@ class WebmailMail(models.Model):
         string="Subject", compute="_compute_display_subject", store=True
     )
 
-    identifier = fields.Char(required=True, readonly=True)
-
     origin_mail_id = fields.Many2one(comodel_name="webmail.mail", readonly=True)
 
     conversation_id = fields.Many2one(
         comodel_name="webmail.conversation", readonly=True, ondelete="cascade"
     )
 
-    reply_identifier = fields.Char(readonly=True)
+    technical_message_id = fields.Char(required=True, readonly=True)
 
-    sender_address_id = fields.Many2one(
-        comodel_name="webmail.address",
-        required=True,
-    )
+    technical_in_reply_to = fields.Char(readonly=True)
+    technical_date = fields.Datetime(required=True, readonly=True)
+
+    technical_subject = fields.Char(readonly=True)
+    technical_body = fields.Html(readonly=True)
+
+    technical_to = fields.Char(readonly=True)
+    technical_from = fields.Char(readonly=True)
+    technical_cc = fields.Char(readonly=True)
+
+    # sender_address_id = fields.Many2one(
+    #     comodel_name="webmail.address",
+    #     readonly=True,
+    # )
 
     user_id = fields.Many2one(
         comodel_name="res.users",
@@ -104,7 +95,7 @@ class WebmailMail(models.Model):
     def _fetch_mails(self, webmail_folder):
         client = webmail_folder.account_id._get_client_connected()
         try:
-            client.select_folder(webmail_folder.technical_name)
+            client.select(webmail_folder.technical_name)
         except imaplib.IMAP4.error as e:
             message = _(
                 "Folder %(folder_name)s doesn't exists for account %(account_login)s."
@@ -117,38 +108,36 @@ class WebmailMail(models.Model):
             client.logout()
             raise UserError(message) from e
 
-        # TODO ADD : [u'SINCE', date(2005, 4, 3)]
-        message_ids = client.search(["NOT", "DELETED"])
-        mail_datas = client.fetch(message_ids, ["FLAGS", "ENVELOPE", "RFC822"])
+        message_numbers = client.search(None, "(ALL)")[1][0].split()
+        # mail_datas = client.fetch(message_ids, ["FLAGS", "ENVELOPE", "RFC822"])
 
-        for _message_id, mail_data in mail_datas.items():
-            self._get_or_create(webmail_folder, mail_data)
+        for message_number in message_numbers:
+            message_data = client.fetch(message_number, "(RFC822)")[1][0][1]
+            if isinstance(message_data, xmlrpclib.Binary):
+                message_data = bytes(message_data.data)
+            if isinstance(message_data, str):
+                message_data = message_data.encode("utf-8")
+            message = email.message_from_bytes(message_data, policy=email.policy.SMTP)
+            self._get_or_create(webmail_folder, message)
 
         client.logout()
 
-    def _get_or_create(self, webmail_folder, mail_data):
-        envelope = mail_data[b"ENVELOPE"]
-        identifier = envelope.message_id.decode()
-        reply_identifier = (
-            envelope.in_reply_to and envelope.in_reply_to.decode() or False
+    def _get_or_create(self, webmail_folder, message):
+        message_dict = (
+            self.env["mail.thread"]
+            .with_context(no_mail_thread=True)
+            .message_parse(message)
         )
+
+        technical_message_id = message_dict["message_id"]
+        technical_in_reply_to = message_dict["in_reply_to"]
         vals = {
             "folder_id": webmail_folder.id,
         }
-        if b"\\Recent" in mail_data[b"FLAGS"]:
-            vals.update({"is_unread": True})
-
-        # parsed = email.message_from_bytes(mail_data[b"RFC822"])
-        # html = self._get_email_to_html(parsed)
-        # print("==========")
-        # print(html)
-        # print("==========")
 
         # Check if mail exists in Odoo
         existing_mail = self.search(
-            [
-                ("identifier", "=", identifier),
-            ]
+            [("technical_message_id", "=", technical_message_id)]
         )
         if existing_mail:
             if existing_mail.folder_id != webmail_folder:
@@ -156,15 +145,11 @@ class WebmailMail(models.Model):
             return existing_mail
 
         origin_mail = self.search(
-            [
-                ("identifier", "=", reply_identifier),
-            ]
+            [("technical_message_id", "=", technical_in_reply_to)]
         )
 
         other_mails = self.search(
-            [
-                ("reply_identifier", "=", identifier),
-            ]
+            [("technical_in_reply_to", "=", technical_message_id)]
         )
 
         # Get conversation(s) and merge if required or create a new one
@@ -184,44 +169,32 @@ class WebmailMail(models.Model):
 
         vals.update(
             {
-                "identifier": identifier,
                 "conversation_id": conversation.id,
-                "technical_date": envelope.date,
-                "reply_identifier": reply_identifier,
                 "origin_mail_id": origin_mail and origin_mail.id,
-                "technical_subject": _get_string(envelope.subject),
-                "sender_address_id": self.env["webmail.address"]
-                ._get_from_address(webmail_folder.user_id, envelope.sender[0])
-                .id,
-                "technical_envelope": str(envelope),
-                "technical_flags": str(mail_data[b"FLAGS"]),
-                "technical_rfc822": str(mail_data[b"RFC822"]),
+                "technical_message_id": technical_message_id,
+                "technical_in_reply_to": technical_in_reply_to,
+                "technical_date": message_dict["date"],
+                "technical_subject": message_dict["subject"],
+                "technical_from": message_dict["from"],
+                "technical_cc": message_dict["cc"],
+                "technical_to": message_dict["to"],
+                "technical_body": message_dict["body"],
+                # "sender_address_id": self.env["webmail.address"]
+                # ._get_from_address(webmail_folder.user_id, envelope.sender[0])
+                # .id,
+                # "technical_envelope": str(envelope),
+                # "technical_flags": str(mail_data[b"FLAGS"]),
+                # "technical_rfc822": str(mail_data[b"RFC822"]),
             }
         )
 
         _logger.info(
             "fetch from the upstream mail server."
             " Account %s. Creation of mail %s"
-            % (webmail_folder.account_id.name, identifier)
+            % (webmail_folder.account_id.name, technical_message_id)
         )
         new_mail = self.create(vals)
 
         if other_mails:
-            other_mails.write(
-                {
-                    "origin_mail_id": new_mail.id,
-                }
-            )
+            other_mails.write({"origin_mail_id": new_mail.id})
         return new_mail
-
-    # @api.model
-    # def _get_email_to_html(self, parsed):
-    #     all_parts = []
-    #     for part in parsed.walk():
-    #         if type(part.get_payload()) == list:
-    #             for subpart in part.get_payload():
-    #                 all_parts += self._get_email_to_html(subpart)
-    #         else:
-    #             if encoding := part.get_content_charset():
-    #                 all_parts.append(part.get_payload(decode=True).decode(encoding))
-    #     return "".join(all_parts)

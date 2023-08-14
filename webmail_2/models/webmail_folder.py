@@ -44,7 +44,7 @@ class WebmailFolder(models.Model):
     technical_name = fields.Char(required=True, readonly=True)
 
     # Compute Section
-    @api.depends("mail_ids")
+    @api.depends("mail_ids.folder_id")
     def _compute_mail_qty(self):
         for folder in self:
             folder.mail_qty = len(folder.mail_ids)

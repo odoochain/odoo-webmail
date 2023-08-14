@@ -55,9 +55,9 @@ class WebmailConversation(models.Model):
     # Compute Section
     @api.depends(
         "mail_ids.technical_date",
-        "mail_ids.sender_address_id",
         "mail_ids.display_subject",
     )
+    # "mail_ids.sender_address_id",
     def _compute_mail_infos(self):
         for conversation in self:
             mails = conversation.mail_ids.sorted(key=lambda r: r.technical_date)
@@ -69,7 +69,7 @@ class WebmailConversation(models.Model):
                 conversation.date_first_mail = False
                 conversation.date_last_mail = False
                 conversation.display_subject = False
-            conversation.contact_ids = mails.mapped("sender_address_id")
+            # conversation.contact_ids = mails.mapped("sender_address_id")
 
     @api.depends("date_last_mail")
     def _compute_display_date(self):
