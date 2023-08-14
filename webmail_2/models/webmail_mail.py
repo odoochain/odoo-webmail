@@ -27,6 +27,13 @@ class WebmailMail(models.Model):
         comodel_name="webmail.folder",
         required=True,
         readonly=True,
+        ondelete="cascade",
+    )
+
+    account_id = fields.Many2one(
+        comodel_name="webmail.account",
+        related="folder_id.account_id",
+        store=True,
     )
 
     display_subject = fields.Html(
@@ -95,7 +102,10 @@ class WebmailMail(models.Model):
     def _fetch_mails(self, webmail_folder):
         client = webmail_folder.account_id._get_client_connected()
         try:
-            client.select(webmail_folder.technical_name)
+            folder_name = webmail_folder.technical_name
+            if " " in folder_name:
+                folder_name = '"' + folder_name + '"'
+            client.select(folder_name)
         except imaplib.IMAP4.error as e:
             message = _(
                 "Folder %(folder_name)s doesn't exists for account %(account_login)s."
@@ -174,7 +184,8 @@ class WebmailMail(models.Model):
                 "technical_message_id": technical_message_id,
                 "technical_in_reply_to": technical_in_reply_to,
                 "technical_date": message_dict["date"],
-                "technical_subject": message_dict["subject"],
+                # draft mail can have no subject
+                "technical_subject": message_dict.get("subject", ""),
                 "technical_from": message_dict["from"],
                 "technical_cc": message_dict["cc"],
                 "technical_to": message_dict["to"],
