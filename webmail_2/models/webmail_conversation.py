@@ -14,6 +14,7 @@ class WebmailConversation(models.Model):
     _name = "webmail.conversation"
     _description = "Webmail Conversation"
     _order = "date_last_mail desc"
+    _rec_name = "technical_subject"
 
     date_first_mail = fields.Datetime(compute="_compute_mail_infos", store=True)
 
@@ -22,6 +23,9 @@ class WebmailConversation(models.Model):
     display_date = fields.Char(compute="_compute_display_date")
 
     display_subject = fields.Html(
+        string="Displayed Subject", compute="_compute_mail_infos", store=True
+    )
+    technical_subject = fields.Char(
         string="Subject", compute="_compute_mail_infos", store=True
     )
 
@@ -65,10 +69,12 @@ class WebmailConversation(models.Model):
                 conversation.date_first_mail = mails[0].technical_date
                 conversation.date_last_mail = mails[-1].technical_date
                 conversation.display_subject = mails[0].display_subject
+                conversation.technical_subject = mails[0].technical_subject
             else:
                 conversation.date_first_mail = False
                 conversation.date_last_mail = False
                 conversation.display_subject = False
+                conversation.technical_subject = False
             # conversation.contact_ids = mails.mapped("sender_address_id")
 
     @api.depends("date_last_mail")

@@ -6,6 +6,13 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 -->
 <odoo>
 
+    <record id="act_conversation_2_mail" model="ir.actions.act_window">
+        <field name="name">Mails</field>
+        <field name="res_model">webmail.mail</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('conversation_id', '=', active_id)]</field>
+    </record>
+
     <record id="view_webmail_conversation_search" model="ir.ui.view">
         <field name="model">webmail.conversation</field>
         <field name="arch" type="xml">
@@ -42,10 +49,18 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
             <form>
                 <header />
                 <sheet>
-                    <div class="oe_button_box" name="button_box" />
+                    <div class="oe_button_box" name="button_box">
+                        <button
+                            class="oe_stat_button"
+                            name="%(act_conversation_2_mail)d"
+                            type="action"
+                            icon="fa-pencil-square-o"
+                        >
+                            <field name="mail_qty" widget="statinfo" />
+                        </button>
+                    </div>
                     <group col="4">
                         <group>
-                            <field name="mail_qty" />
                             <field name="display_subject" />
                         </group>
                         <group>
@@ -57,7 +72,15 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
                         </group>
                     </group>
                     <group>
-                        <field name="mail_ids" nolabel="1" colspan="2" />
+                        <field name="mail_ids" nolabel="1" colspan="2">
+                            <tree>
+                                <field name="technical_body" />
+                                <field name="display_date" />
+                                <field name="display_subject" optional="hide" />
+                                <field name="folder_id" optional="hide" />
+                                <field name="technical_message_id" optional="hide" />
+                            </tree>
+                        </field>
                     </group>
                 </sheet>
             </form>

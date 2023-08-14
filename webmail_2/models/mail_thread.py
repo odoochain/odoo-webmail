@@ -14,7 +14,7 @@ class MailThread(models.AbstractModel):
     ):
         if self.env.context.get("no_mail_thread", False):
             return []
-        return self._mail_find_partner_from_emails(
+        return super()._mail_find_partner_from_emails(
             emails,
             records=records,
             force_create=force_create,
