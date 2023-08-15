@@ -25,7 +25,6 @@
         "security/res_groups.xml",
         "security/ir.model.access.csv",
         "views/menu.xml",
-        "views/view_webmail_host.xml",
         "views/view_webmail_account.xml",
         "views/view_webmail_address.xml",
         "views/view_webmail_folder.xml",
@@ -33,6 +32,6 @@
         "views/view_webmail_conversation.xml",
     ],
     "demo": [
-        "demo/webmail_host.xml",
+        "demo/webmail_account.xml",
     ],
 }

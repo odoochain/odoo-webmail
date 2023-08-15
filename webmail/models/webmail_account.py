@@ -12,16 +12,15 @@ from odoo.exceptions import UserError
 class WebmailAccount(models.Model):
     _name = "webmail.account"
     _description = "Webmail Accounts"
+    _rec_name = "login"
 
-    name = fields.Char(compute="_compute_name", store=True)
-
-    host_id = fields.Many2one(comodel_name="webmail.host", required=True)
+    url = fields.Char(required=True)
 
     login = fields.Char(required=True)
 
-    user_id = fields.Many2one(comodel_name="res.users", required=True)
-
     password = fields.Char(required=True)
+
+    user_id = fields.Many2one(comodel_name="res.users", required=True)
 
     folder_ids = fields.One2many(
         comodel_name="webmail.folder",
@@ -46,19 +45,13 @@ class WebmailAccount(models.Model):
         for account in self:
             account.mail_qty = sum(account.mapped("folder_ids.mail_qty"))
 
-    @api.depends("login", "host_id.name")
-    def _compute_name(self):
-        for account in self:
-            account.name = "%s (%s)" % (account.login, account.host_id.name)
-
     # Action Section
     def button_test_connexion(self):
         # self.with_delay()._test_connexion()
         self._test_connexion()
 
     def button_fetch_folders(self):
-        # self.env["webmail.folder"].with_delay()._fetch_folders(self)
-        self.env["webmail.folder"]._fetch_folders(self)
+        self.env["webmail.folder"].with_delay()._fetch_folders(self)
 
     def button_fetch_mails(self):
         for folder in self.mapped("folder_ids"):
@@ -73,7 +66,7 @@ class WebmailAccount(models.Model):
     def _get_client_connected(self):
         self.ensure_one()
         try:
-            client = IMAP4(host=self.host_id.url)
+            client = IMAP4(host=self.url)
         except socket.gaierror as e:
             raise UserError(
                 _(
@@ -81,7 +74,7 @@ class WebmailAccount(models.Model):
                     "- the server doesn't exist"
                     "- your odoo instance faces to network issue"
                 )
-                % (self.host_id.url)
+                % (self.url)
             ) from e
 
         try:
