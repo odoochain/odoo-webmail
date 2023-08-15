@@ -20,6 +20,7 @@ class WebmailMail(models.Model):
     _name = "webmail.mail"
     _description = "Webmail Mail"
     _order = "technical_date desc"
+    _rec_name = "technical_subject"
 
     display_date = fields.Char(string="date", compute="_compute_display_date")
 
@@ -202,7 +203,7 @@ class WebmailMail(models.Model):
         _logger.info(
             "fetch from the upstream mail server."
             " Account %s. Creation of mail %s"
-            % (webmail_folder.account_id.name, technical_message_id)
+            % (webmail_folder.account_id.login, technical_message_id)
         )
         new_mail = self.create(vals)
 

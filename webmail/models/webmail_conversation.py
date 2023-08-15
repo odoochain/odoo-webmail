@@ -20,7 +20,7 @@ class WebmailConversation(models.Model):
 
     date_last_mail = fields.Datetime(compute="_compute_mail_infos", store=True)
 
-    display_date = fields.Char(compute="_compute_mail_infos", store=True)
+    display_date = fields.Char(string="Date", compute="_compute_display_date")
 
     display_subject = fields.Html(
         string="Displayed Subject", compute="_compute_mail_infos", store=True
@@ -70,16 +70,19 @@ class WebmailConversation(models.Model):
                 conversation.date_last_mail = mails[-1].technical_date
                 conversation.display_subject = mails[0].display_subject
                 conversation.technical_subject = mails[0].technical_subject
-                conversation.display_date = self.env["webmail.mail"]._get_display_date(
-                    conversation.date_last_mail
-                )
             else:
                 conversation.date_first_mail = False
                 conversation.date_last_mail = False
                 conversation.display_subject = False
                 conversation.technical_subject = False
-                conversation.display_date = False
             # conversation.contact_ids = mails.mapped("sender_address_id")
+
+    @api.depends("date_last_mail")
+    def _compute_display_date(self):
+        for conversation in self:
+            conversation.display_date = self.env["webmail.mail"]._get_display_date(
+                conversation.date_last_mail
+            )
 
     @api.depends("mail_ids")
     def _compute_mail_qty(self):
