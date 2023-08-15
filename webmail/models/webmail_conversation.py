@@ -41,7 +41,7 @@ class WebmailConversation(models.Model):
         readonly=True,
     )
 
-    mail_qty = fields.Integer(compute="_compute_mail_qty", store=True)
+    mail_qty = fields.Integer(string="Mails", compute="_compute_mail_qty", store=True)
 
     account_id = fields.Many2one(
         comodel_name="webmail.account",

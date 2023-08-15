@@ -39,7 +39,7 @@ class WebmailFolder(models.Model):
         inverse_name="folder_id",
     )
 
-    mail_qty = fields.Integer(compute="_compute_mail_qty", store=True)
+    mail_qty = fields.Integer(string="Mails", compute="_compute_mail_qty", store=True)
 
     technical_name = fields.Char(required=True, readonly=True)
 
