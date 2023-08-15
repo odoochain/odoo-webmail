@@ -13,6 +13,7 @@
     "license": "AGPL-3",
     "depends": [
         "base",
+        "mail",
         # OCA
         "queue_job",
         "web_notify",

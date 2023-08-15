@@ -2,6 +2,7 @@
 # @author: Sylvain LE GAL (https://twitter.com/legalsylvain)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 import logging
+import re
 
 from odoo import api, fields, models
 
@@ -43,7 +44,7 @@ class WebmailFolder(models.Model):
     technical_name = fields.Char(required=True, readonly=True)
 
     # Compute Section
-    @api.depends("mail_ids")
+    @api.depends("mail_ids.folder_id")
     def _compute_mail_qty(self):
         for folder in self:
             folder.mail_qty = len(folder.mail_ids)
@@ -61,9 +62,14 @@ class WebmailFolder(models.Model):
         client.logout()
 
         for folder_data in folder_datas:
-            (_tags, separator, technical_name) = folder_data
+            reg = r"(?P<tags>\(.*\)) \"((?P<separator>.))\" (?P<technical_name>.*)"
+            result = re.search(reg, folder_data.decode()).groupdict()
+            separator = result["separator"]
+            technical_name = result["technical_name"]
+            if technical_name[0] == '"' and technical_name[-1] == '"':
+                technical_name = technical_name[1:-1]
 
-            self._get_or_create(webmail_account, separator.decode(), technical_name)
+            self._get_or_create(webmail_account, separator, technical_name)
 
     def _get_or_create(self, webmail_account, separator, technical_name):
         # Check if folder exist in Odoo

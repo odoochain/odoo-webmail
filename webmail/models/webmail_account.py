@@ -30,12 +30,10 @@ class WebmailAccount(models.Model):
     )
 
     folder_qty = fields.Integer(
-        string="Folders Quantity", compute="_compute_folder_qty", store=True
+        string="Folders", compute="_compute_folder_qty", store=True
     )
 
-    mail_qty = fields.Integer(
-        string="Mails Quantity", compute="_compute_mail_qty", store=True
-    )
+    mail_qty = fields.Integer(string="Mails", compute="_compute_mail_qty", store=True)
 
     # Compute Section
     @api.depends("folder_ids")
@@ -63,7 +61,6 @@ class WebmailAccount(models.Model):
         self.env["webmail.folder"]._fetch_folders(self)
 
     def button_fetch_mails(self):
-        # self.env["webmail.folder"].with_delay()._fetch_folders(self)
         for folder in self.mapped("folder_ids"):
             folder.button_fetch_mails()
 
