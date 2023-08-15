@@ -6,7 +6,14 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 -->
 <odoo>
 
-    <record id="demo_account_gandi" model="webmail.account">
+    <record id="demo_account_bad_url" model="webmail.account">
+        <field name="url">mymail.badurl.com</field>
+        <field name="login">mylogin</field>
+        <field name="password">mypassword</field>
+        <field name="user_id" ref="base.user_admin" />
+    </record>
+
+    <record id="demo_account_gandi_bad_login" model="webmail.account">
         <field name="url">mail.gandi.net</field>
         <field name="login">mylogin</field>
         <field name="password">mypassword</field>

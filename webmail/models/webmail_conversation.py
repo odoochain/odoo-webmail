@@ -22,9 +22,6 @@ class WebmailConversation(models.Model):
 
     display_date = fields.Char(string="Date", compute="_compute_display_date")
 
-    display_subject = fields.Html(
-        string="Displayed Subject", compute="_compute_mail_infos", store=True
-    )
     technical_subject = fields.Char(
         string="Subject", compute="_compute_mail_infos", store=True
     )
@@ -59,7 +56,6 @@ class WebmailConversation(models.Model):
     # Compute Section
     @api.depends(
         "mail_ids.technical_date",
-        "mail_ids.display_subject",
     )
     # "mail_ids.sender_address_id",
     def _compute_mail_infos(self):
@@ -68,12 +64,10 @@ class WebmailConversation(models.Model):
             if mails:
                 conversation.date_first_mail = mails[0].technical_date
                 conversation.date_last_mail = mails[-1].technical_date
-                conversation.display_subject = mails[0].display_subject
                 conversation.technical_subject = mails[0].technical_subject
             else:
                 conversation.date_first_mail = False
                 conversation.date_last_mail = False
-                conversation.display_subject = False
                 conversation.technical_subject = False
             # conversation.contact_ids = mails.mapped("sender_address_id")
 

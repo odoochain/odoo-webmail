@@ -37,10 +37,6 @@ class WebmailMail(models.Model):
         store=True,
     )
 
-    display_subject = fields.Html(
-        string="Subject", compute="_compute_display_subject", store=True
-    )
-
     origin_mail_id = fields.Many2one(comodel_name="webmail.mail", readonly=True)
 
     conversation_id = fields.Many2one(
@@ -72,11 +68,6 @@ class WebmailMail(models.Model):
     )
 
     # Compute Section
-    @api.depends("technical_subject")
-    def _compute_display_subject(self):
-        for mail in self:
-            mail.display_subject = mail.technical_subject
-
     @api.depends("technical_date")
     def _compute_display_date(self):
         for mail in self:

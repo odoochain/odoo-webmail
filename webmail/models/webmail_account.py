@@ -2,11 +2,8 @@
 # @author: Sylvain LE GAL (https://twitter.com/legalsylvain)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
-import socket
-from imaplib import IMAP4
 
-from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo import api, fields, models
 
 
 class WebmailAccount(models.Model):
@@ -47,8 +44,7 @@ class WebmailAccount(models.Model):
 
     # Action Section
     def button_test_connexion(self):
-        # self.with_delay()._test_connexion()
-        self._test_connexion()
+        self.env["imap.proxy"].test_connexion()
 
     def button_fetch_folders(self):
         self.env["webmail.folder"].with_delay()._fetch_folders(self)
@@ -56,36 +52,3 @@ class WebmailAccount(models.Model):
     def button_fetch_mails(self):
         for folder in self.mapped("folder_ids"):
             folder.button_fetch_mails()
-
-    # Private Section
-    def _test_connexion(self):
-        self.ensure_one()
-        client = self._get_client_connected()
-        client.logout()
-
-    def _get_client_connected(self):
-        self.ensure_one()
-        try:
-            client = IMAP4(host=self.url)
-        except socket.gaierror as e:
-            raise UserError(
-                _(
-                    "server '%s' has not been reached. Possible Reasons: \n"
-                    "- the server doesn't exist"
-                    "- your odoo instance faces to network issue"
-                )
-                % (self.url)
-            ) from e
-
-        try:
-            client.login(self.login, self.password)
-        except IMAP4.error as e:
-            raise UserError(
-                _(
-                    "Authentication failed. Possible Reasons: \n"
-                    "- your credentials are incorrect (%s // **********)"
-                )
-                % (self.login)
-            ) from e
-
-        return client

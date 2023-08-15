@@ -8,7 +8,3 @@ from odoo.tests.common import TransactionCase
 class Tests(TransactionCase):
     def setUp(self):
         super().setUp()
-
-    # Test Section
-    def _test_01(self):
-        pass
