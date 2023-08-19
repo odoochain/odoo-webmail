@@ -18,7 +18,7 @@ class Tests(TransactionCase):
     # Test Section
     def test_test_connexion(self):
         # TODO, improve check content of error
-        with self.assertRaises(UserError):
+        with self.assertRaises(TimeoutError):
             self.proxy.test_connexion(self.demo_account_bad_url)
 
         with self.assertRaises(UserError):

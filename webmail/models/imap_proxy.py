@@ -11,6 +11,7 @@ from odoo.exceptions import UserError
 
 class ImapProxy(models.AbstractModel):
     _name = "imap.proxy"
+    _description = "IMAP Proxy"
 
     def test_connexion(self, webmail_account):
         client = self._get_client_connected(webmail_account)
@@ -18,7 +19,7 @@ class ImapProxy(models.AbstractModel):
 
     def _get_client_connected(self, webmail_account):
         try:
-            client = IMAP4(host=webmail_account.url)
+            client = IMAP4(host=webmail_account.url, timeout=5)
         except socket.gaierror as e:
             raise UserError(
                 _(
