@@ -15,7 +15,6 @@
         "base",
         "mail",
         # OCA
-        "queue_job",
         "web_notify",
     ],
     "external_dependencies": {"python": ["imapclient"]},

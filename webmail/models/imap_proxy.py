@@ -14,10 +14,12 @@ class ImapProxy(models.AbstractModel):
     _description = "IMAP Proxy"
 
     def test_connexion(self, webmail_account):
+        webmail_account.ensure_one()
         client = self._get_client_connected(webmail_account)
         client.logout()
 
     def _get_client_connected(self, webmail_account):
+        webmail_account.ensure_one()
         try:
             client = IMAP4(host=webmail_account.url, timeout=5)
         except socket.gaierror as e:
@@ -42,3 +44,10 @@ class ImapProxy(models.AbstractModel):
             ) from e
 
         return client
+
+    def get_folders_data(self, webmail_account):
+        webmail_account.ensure_one()
+        client = self._get_client_connected(webmail_account)
+        result = client.list()
+        client.logout()
+        return result

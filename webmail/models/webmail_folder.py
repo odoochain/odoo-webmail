@@ -2,7 +2,6 @@
 # @author: Sylvain LE GAL (https://twitter.com/legalsylvain)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 import logging
-import re
 
 from odoo import api, fields, models
 
@@ -19,6 +18,11 @@ class WebmailFolder(models.Model):
     parent_id = fields.Many2one(
         comodel_name="webmail.folder",
         readonly=True,
+    )
+
+    child_ids = fields.One2many(
+        comodel_name="webmail.folder",
+        inverse_name="parent_id",
     )
 
     account_id = fields.Many2one(
@@ -51,25 +55,7 @@ class WebmailFolder(models.Model):
 
     # Action Section
     def button_fetch_mails(self):
-        # self.env["webmail.mail"].with_delay()._fetch_mails(self)
         self.env["webmail.mail"]._fetch_mails(self)
-
-    # Private Section
-    @api.model
-    def _fetch_folders(self, webmail_account):
-        client = webmail_account._get_client_connected()
-        _status, folder_datas = client.list()
-        client.logout()
-
-        for folder_data in folder_datas:
-            reg = r"(?P<tags>\(.*\)) \"((?P<separator>.))\" (?P<technical_name>.*)"
-            result = re.search(reg, folder_data.decode()).groupdict()
-            separator = result["separator"]
-            technical_name = result["technical_name"]
-            if technical_name[0] == '"' and technical_name[-1] == '"':
-                technical_name = technical_name[1:-1]
-
-            self._get_or_create(webmail_account, separator, technical_name)
 
     def _get_or_create(self, webmail_account, separator, technical_name):
         # Check if folder exist in Odoo
@@ -99,6 +85,6 @@ class WebmailFolder(models.Model):
 
         _logger.info(
             "fetch from the upstream mail server."
-            " Account %s. Creation of folder %s" % (webmail_account.name, vals["name"])
+            " Account %s. Creation of folder %s" % (webmail_account.login, vals["name"])
         )
         return self.create(vals)
