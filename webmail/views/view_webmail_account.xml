@@ -10,14 +10,14 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
         <field name="name">Folders</field>
         <field name="res_model">webmail.folder</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('account_id', '=', active_id)]</field>
+        <field name="domain">[('account_id', 'in', active_ids)]</field>
     </record>
 
     <record id="act_account_2_mail" model="ir.actions.act_window">
         <field name="name">Mails</field>
         <field name="res_model">webmail.mail</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('account_id', '=', active_id)]</field>
+        <field name="domain">[('account_id', 'in', active_ids)]</field>
     </record>
 
     <record id="view_webmail_account_search" model="ir.ui.view">
