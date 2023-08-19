@@ -12,6 +12,7 @@ class WebmailFolder(models.Model):
     _name = "webmail.folder"
     _description = "Webmail Folders"
     _order = "technical_name"
+    _rec_name = "technical_name"
 
     name = fields.Char(required=True, readonly=True)
 
@@ -43,11 +44,20 @@ class WebmailFolder(models.Model):
         inverse_name="folder_id",
     )
 
+    folder_qty = fields.Integer(
+        string="Folders", compute="_compute_folder_qty", store=True
+    )
+
     mail_qty = fields.Integer(string="Mails", compute="_compute_mail_qty", store=True)
 
     technical_name = fields.Char(required=True, readonly=True)
 
     # Compute Section
+    @api.depends("child_ids.parent_id")
+    def _compute_folder_qty(self):
+        for folder in self:
+            folder.folder_qty = len(folder.child_ids)
+
     @api.depends("mail_ids.folder_id")
     def _compute_mail_qty(self):
         for folder in self:

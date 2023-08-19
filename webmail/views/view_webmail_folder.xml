@@ -6,11 +6,18 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 -->
 <odoo>
 
+    <record id="act_folder_2_folder" model="ir.actions.act_window">
+        <field name="name">Folders</field>
+        <field name="res_model">webmail.folder</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('parent_id', 'in', active_ids)]</field>
+    </record>
+
     <record id="act_folder_2_mail" model="ir.actions.act_window">
         <field name="name">Mails</field>
         <field name="res_model">webmail.mail</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('folder_id', '=', active_id)]</field>
+        <field name="domain">[('folder_id', 'in', active_ids)]</field>
     </record>
 
     <record id="view_webmail_folder_search" model="ir.ui.view">
@@ -54,6 +61,15 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
                     <div class="oe_button_box" name="button_box">
                         <button
                             class="oe_stat_button"
+                            name="%(act_folder_2_folder)d"
+                            type="action"
+                            icon="fa-pencil-square-o"
+                        >
+                            <field name="folder_qty" widget="statinfo" />
+                        </button>
+
+                        <button
+                            class="oe_stat_button"
                             name="%(act_folder_2_mail)d"
                             type="action"
                             icon="fa-pencil-square-o"
@@ -65,8 +81,11 @@ License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
                     <group>
                         <group>
                             <field name="name" />
-                            <field name="parent_id" />
-                            <field name="technical_name" />
+                            <field
+                                name="parent_id"
+                                attrs="{'invisible': [('parent_id', '=', False)]}"
+                            />
+                            <field name="technical_name" invisible="1" />
                             <field name="account_id" />
                         </group>
                         <group />
