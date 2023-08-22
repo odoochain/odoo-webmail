@@ -1,9 +1,13 @@
 # Copyright (C) 2023 - Today: OaaFS
 # @author: Sylvain LE GAL (https://twitter.com/legalsylvain)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+import email
+import imaplib
 import logging
+from xmlrpc import client as xmlrpclib
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -65,8 +69,10 @@ class WebmailFolder(models.Model):
 
     # Action Section
     def button_fetch_mails(self):
-        self.env["webmail.mail"]._fetch_mails(self)
+        for folder in self:
+            folder._fetch_mails()
 
+    # Custom Section
     def _get_or_create(self, webmail_account, separator, technical_name):
         # Check if folder exist in Odoo
         existing_folder = self.search(
@@ -98,3 +104,35 @@ class WebmailFolder(models.Model):
             " Account %s. Creation of folder %s" % (webmail_account.login, vals["name"])
         )
         return self.create(vals)
+
+    def _fetch_mails(self, webmail_folder):
+        client = webmail_folder.account_id._get_client_connected()
+        try:
+            folder_name = webmail_folder.technical_name
+            if " " in folder_name:
+                folder_name = '"' + folder_name + '"'
+            client.select(folder_name)
+        except imaplib.IMAP4.error as e:
+            message = _(
+                "Folder %(folder_name)s doesn't exists for account %(account_login)s."
+            ) % (
+                {
+                    "folder_name": webmail_folder.technical_name,
+                    "account_login": webmail_folder.account_id.login,
+                }
+            )
+            client.logout()
+            raise UserError(message) from e
+
+        message_numbers = client.search(None, "(ALL)")[1][0].split()
+
+        for message_number in message_numbers:
+            message_data = client.fetch(message_number, "(RFC822)")[1][0][1]
+            if isinstance(message_data, xmlrpclib.Binary):
+                message_data = bytes(message_data.data)
+            if isinstance(message_data, str):
+                message_data = message_data.encode("utf-8")
+            message = email.message_from_bytes(message_data, policy=email.policy.SMTP)
+            self._get_or_create(webmail_folder, message)
+
+        client.logout()

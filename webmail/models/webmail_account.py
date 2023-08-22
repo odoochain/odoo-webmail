@@ -48,15 +48,16 @@ class WebmailAccount(models.Model):
         self.env["imap.proxy"].test_connexion(self)
 
     def button_fetch_folders(self):
-        self._fetch_folders()
+        for account in self:
+            account._fetch_folders()
 
     def button_fetch_mails(self):
         for folder in self.mapped("folder_ids"):
             folder.button_fetch_mails()
 
     # Private Section
-    @api.model
     def _fetch_folders(self):
+        self.ensure_one()
         WebmailFolder = self.env["webmail.folder"]
         _status, folder_datas = self.env["imap.proxy"].get_folders_data(self)
 
