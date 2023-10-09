@@ -4,7 +4,7 @@
 {
     "name": "Webmail",
     "summary": "Odoo as a Webmail",
-    "version": "16.0.1.0.0",
+    "version": "16.0.1.0.1",
     "category": "R&D",
     "author": "Odoo as a Free Software (OaaFS)",
     "developpement_status": "Alpha",
